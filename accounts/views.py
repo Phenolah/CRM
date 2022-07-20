@@ -1,6 +1,9 @@
-from django.shortcuts import render
+from gettext import find
+from multiprocessing import context
+from django.shortcuts import render,redirect
 from .models import *
-from .models import Product
+from .forms import OrderForm
+
 
 #create your views here
 def home_page(request):
@@ -17,9 +20,40 @@ def home_page(request):
 def products(request):
     products = Product.objects.all()
     return render(request, "accounts/products.html", {"products":products})
-def customer(request,pk_test):
-    customer = Customer.objects.get(id=pk_test)
+def customer(request,pk):
+    customer = Customer.objects.get(id=pk)
     orders = customer.order_set.all()
     context = {"customer":customer, "orders":orders}
     return render(request, "accounts/customer.html", context)
+def createOrder(request, pk):
+    customer = Customer.objects.get(id=pk)
+    form = OrderForm()
+    if request.method == "POST":
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("/")
+    context = {"form":form, 'customer': customer}
+    return render(request, "accounts/order_form.html", context)
+
+def updateOrder(request,pk):
+    order = Order.objects.get(id=pk)
+    form = OrderForm(instance=order)
+    if request.method == "POST":
+        form = OrderForm( request.POST, instance=order)
+        if form.is_valid():
+            form.save()
+            return redirect("/")
+    context = {"form":form, "order":order}
+    return render(request, 'accounts/order_form.html', context)
+def deleteOrder(request,pk):
+    order = Order.objects.get(id=pk)
+    delete = OrderForm(instance=order)
+    if request.method == "POST":
+        order.delete()
+        return redirect("/")
+    context = {"item":order}
+    return render(request, 'accounts/delete.html', context)
+
+    
 
